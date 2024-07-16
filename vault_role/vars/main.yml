@@ -1,0 +1,4 @@
+---
+# vars file for vault_role
+valid_user_action:
+  - "read_secrets"

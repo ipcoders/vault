@@ -1,0 +1,33 @@
+---
+- name: General Prechecks - Env Vars
+  when: >
+        lookup('env', 'VAULT_TOKEN') == "" or
+        lookup('env', 'VAULT_ADDR') == "" or
+        lookup('env', 'VAULT_SKIP_VERIFY') == ""
+  block:
+    - name: Ensure environment variables are set
+      debug:
+        msg: "One or many environment variables are missing, VAULT_TOKEN, VAULT_ADDR and VAULT_SKIP_VERIFY are required."
+
+    - name: Stop execution
+      meta: end_play
+
+- name: General Prechecks - User Action
+  when: user_action not in valid_user_action
+  block:
+    - name: Error message
+      ansible.builtin.debug:
+        msg: "User action '{{ user_action }}' is not valid."
+
+    - name: Stop execution
+      meta: end_play
+
+- name: Set Vars
+  ansible.builtin.set_fact:
+    vault_addr: "{{ lookup('env', 'VAULT_ADDR') }}"
+    vault_token: "{{ lookup('env', 'VAULT_TOKEN') }}"
+
+- name: Execute task
+  ansible.builtin.include_tasks:
+    file: "{{ user_action }}.yml"
+
