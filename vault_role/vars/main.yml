@@ -8,5 +8,6 @@ valid_engine_types:
 valid_user_action:
   - "enable_engine"
   - "list_engines"
-  - "read_secrets"
+  - "list_secrets"
+  - "create_secret_kv"
   - "update_secrets"
