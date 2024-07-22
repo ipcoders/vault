@@ -6,7 +6,6 @@
 # Required Parameters:
 #   - engine_name
 #   - engine_type
-#   - secret_name
 #
 # Set Variables:
 #   - is_secret_empty: A secret could exist with or without content.
@@ -31,9 +30,9 @@
 - name: Show result
   when: result['status'] == 404
   ansible.builtin.debug:
-    msg: "Secret does not exist"
+    msg: "Could not get engines."
 
-- name: Secret exists
+- name: Existing engines
   when: result['status'] in [200, 201, 204]
   block:
     - name: Set var

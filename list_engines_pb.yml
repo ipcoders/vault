@@ -7,6 +7,6 @@
       ansible.builtin.include_role:
         name: vault_role
       vars:
-        user_action: "list_secrets"
+        user_action: "list_engines"
 
 

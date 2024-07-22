@@ -15,14 +15,14 @@
   block:
     - name: Vault task
       ansible.builtin.include_tasks:
-        file: list_secrets.yml
+        file: list_engines.yml
 
     - name: Validate engines
       when: engine_name in existing_engines
       block:
         - name: Error message
           debug:
-            msg: "Secret engine '{{ engine_name }}' already exists."
+            msg: "Engine '{{ engine_name }}' already exists."
 
         - name: Stop execution
           meta: end_play
@@ -62,6 +62,19 @@
   register: result
 
 - name: Show result
+  when: result['status'] in [200, 201, 204]
   ansible.builtin.debug:
-    msg: "{{ result }}"
+    msg: "Engine '{{ engine_name }}' of type {{ engine_type }} was created."
+
+- name: User message 
+  when: result['status'] not in [200, 201, 204]
+  block:
+    - name: Error message
+      ansible.builtin.debug:
+        msg: "Engine '{{ engine_name }}' was not created."
+
+    - name: Stop execution
+      meta: end_play
+
+
 
