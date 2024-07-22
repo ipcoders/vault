@@ -1,0 +1,67 @@
+---
+- name: Prechecks - Required vars
+  when: >
+    engine_type not in valid_engine_types or
+    engine_name == ""
+  block:
+    - name: Error message
+      debug:
+        msg: "The engine type '{{ engine_type }}' is not valid or engine name was empty."
+
+    - name: Stop execution
+      meta: end_play
+
+- name: Prechecks - Check existing engines
+  block:
+    - name: Vault task
+      ansible.builtin.include_tasks:
+        file: list_secrets.yml
+
+    - name: Validate engines
+      when: engine_name in existing_engines
+      block:
+        - name: Error message
+          debug:
+            msg: "Secret engine '{{ engine_name }}' already exists."
+
+        - name: Stop execution
+          meta: end_play
+
+- name: Create body for kv engine
+  when: engine_type == "kv"
+  set_fact:
+    body: 
+      type: "kv"
+      options: 
+        version: "2"
+
+- name: Create body
+  when: engine_type == "ssh"
+  set_fact:
+    body:
+      type: "ssh"
+
+- name: Create body
+  when: engine_type == "pki"
+  set_fact:
+    body:
+      type: "pki"
+
+- name: Create Engine
+  when: body is defined
+  uri:
+    url: "{{ vault_addr }}/v1/sys/mounts/{{ engine_name }}"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ lookup('env', 'VAULT_TOKEN') }}"
+    body: "{{ body }}"
+    status_code: [200, 201, 204, 400]
+    body_format: json
+    return_content: true
+    validate_certs: false
+  register: result
+
+- name: Show result
+  ansible.builtin.debug:
+    msg: "{{ result }}"
+

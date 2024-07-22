@@ -1,4 +1,12 @@
 ---
 # vars file for vault_role
+backup_dir: "backup/"
+valid_engine_types:
+  - "pki"
+  - "ssh"
+  - "kv"
 valid_user_action:
+  - "enable_engine"
+  - "list_secrets"
   - "read_secrets"
+  - "update_secrets"

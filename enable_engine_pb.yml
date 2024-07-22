@@ -1,0 +1,20 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_prompt:
+    - name: "engine_type"
+      prompt: "Please enter the engine type (pki, ssh, or kv)"
+      private: no
+      default: "kv"
+
+    - name: "engine_name"
+      prompt: "Please enter the engine name"
+      private: no
+
+
+  tasks:
+    - name: Vault role
+      ansible.builtin.include_role:
+        name: vault_role
+      vars:
+        user_action: "enable_engine"
