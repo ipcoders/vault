@@ -1,0 +1,24 @@
+---
+- name: Get the current time from the local machine
+  command: date +"%Y_%m_%d__%H_%M_%S"
+  register: result
+
+- name: Error message
+  when: result['failed']
+  block: 
+    - name: Show message
+      ansible.builtin.debug:
+        msg: "Query for getting the current time failed."
+
+    - name: Stop execution
+      meta: end_play
+
+
+- name: Set var
+  set_fact:
+    current_time: "_{{ result.stdout }}"
+
+- name: Display the current time
+  debug:
+    msg: "Current time is {{ current_time }}"
+

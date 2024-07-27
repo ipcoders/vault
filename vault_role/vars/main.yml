@@ -6,8 +6,9 @@ valid_engine_types:
   - "ssh"
   - "kv"
 valid_user_action:
-  - "enable_engine"
+  - "create_engine"
   - "list_engines"
   - "list_secrets"
-  - "create_secret_kv"
-  - "update_secrets"
+  - "backup_secret"
+  - "update_secret"
+  - "create_secret"
