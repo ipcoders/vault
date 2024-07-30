@@ -1,0 +1,67 @@
+---
+- name: Prechecks - Required vars
+  when: >
+    auth_method_type not in valid_auth_methods or
+    auth_method_name == ""
+  block:
+    - name: Error message
+      debug:
+        msg: "The authentication method '{{ auth_method_type }}' is not valid or name was empty."
+
+    - name: Stop execution
+      meta: end_play
+
+- name: Prechecks - Check existing engines
+  block:
+    - name: Vault task
+      ansible.builtin.include_tasks:
+        file: list_authmethods.yml
+
+    - name: Validate engines
+      when: auth_method_name in existing_authmethods
+      block:
+        - name: Error message
+          ansible.builtin.debug:
+            msg: "Authentication Method '{{ auth_method_name }}' already exists."
+
+        - name: Stop execution
+          meta: end_play
+
+- name: Create body
+  ansible.builtin.set_fact:
+    body: >
+      {
+        "type": "{{ auth_method_type }}"
+      }
+
+- name: Create Authentication Method 
+  when: body is defined
+  ansible.builtin.uri:
+    url: "{{ vault_addr }}/v1/sys/auth/{{ auth_method_name }}"
+    method: POST
+    headers:
+      X-Vault-Token: "{{ vault_token }}"
+    body: "{{ body }}"
+    status_code: [200, 201, 204, 400]
+    body_format: json
+    return_content: true
+    validate_certs: false
+  register: result
+
+- name: Show result
+  when: result['status'] in [200, 201, 204]
+  ansible.builtin.debug:
+    msg: "Authentication Method '{{ auth_method_name }}' of type '{{ auth_method_type }}' was created."
+
+- name: User message 
+  when: result['status'] not in [200, 201, 204]
+  block:
+    - name: Error message
+      ansible.builtin.debug:
+        msg: "Authentication Method '{{ auth_method_name }}' was not created."
+
+    - name: Stop execution
+      meta: end_play
+
+
+

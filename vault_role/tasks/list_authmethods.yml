@@ -1,11 +1,11 @@
 ---
 - name: Set vars
   ansible.builtin.set_fact:
-    existing_engines: []
+    existing_authmethods: []
 
-- name: Get Engines
+- name: Get Authentication Methods
   ansible.builtin.uri:
-    url: "{{ vault_addr }}/v1/sys/internal/ui/mounts"
+    url: "{{ vault_addr }}/v1/sys/auth"
     method: GET
     headers:
       X-Vault-Token: "{{ vault_token }}"
@@ -17,29 +17,29 @@
 - name: Show result
   when: result['status'] == 404
   ansible.builtin.debug:
-    msg: "Could not get engines."
+    msg: "Could not get authentication methods."
 
-- name: Existing engines
+- name: Existing Authentication Methods
   when: result['status'] in [200, 201, 204]
   block:
     - name: Set var
-      ansible.builtin.set_fact:
-        show_existing_engines: "{{ show_existing_engines | 
+      ansible.builtin.set_fact: 
+        show_existing_authmethods: "{{ show_existing_authmethods | 
           default([]) + [{
             'name': item.key | regex_replace('/', ''), 
             'type': item.value.type 
           }] }}"
-      loop: "{{ result['json']['data']['secret'] | dict2items }}"
+      loop: "{{ result['json']['data'] | dict2items }}"
 
     - name: Set var
       ansible.builtin.set_fact:
-        existing_engines: "{{ existing_engines | 
+        existing_authmethods: "{{ existing_authmethods | 
           default([]) + [ item.key | regex_replace('/', '')] }}"
-      loop: "{{ result['json']['data']['secret'] | dict2items }}"
+      loop: "{{ result['json']['data'] | dict2items }}"
 
-    - name: Existing Engines
+    - name: Existing Authentication Methods
       ansible.builtin.debug:
-        msg: "{{ show_existing_engines }}"
+        msg: "{{ show_existing_authmethods }}" 
    
 
 

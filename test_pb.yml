@@ -1,0 +1,20 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars_prompt:
+    - name: "auth_method_name"
+      prompt: "Please enter a name for the authentication method"
+      private: no
+
+    - name: "auth_method_type"
+      prompt: "Please enter the authentication method to enable (e.g., userpass, token, approle)"
+      private: no
+      default: "userpass"
+  tasks:
+    - name: Vault role
+      ansible.builtin.include_role:
+        name: vault_role
+      vars:
+        user_action: "create_authmethod"
+
+

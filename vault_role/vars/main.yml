@@ -5,10 +5,16 @@ valid_engine_types:
   - "pki"
   - "ssh"
   - "kv"
+valid_auth_methods:
+  - "userpass"
+  - "approle"
+  - "token"
 valid_user_action:
-  - "create_engine"
+  - "list_authmethods"
   - "list_engines"
   - "list_secrets"
   - "backup_secret"
   - "update_secret"
+  - "create_engine"
   - "create_secret"
+  - "create_authmethod"
