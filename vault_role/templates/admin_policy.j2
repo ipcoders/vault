@@ -1,0 +1,8 @@
+{% set policy_name = policy_name | default('vault-admin') %}
+
+vault policy write {{ policy_name }} - <<EOF
+path "*" {
+  capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+}
+EOF
+

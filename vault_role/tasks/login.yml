@@ -1,0 +1,19 @@
+- name: Log in to Vault using token
+  ansible.builtin.shell: "vault login -no-print {{ vault_token }}"
+  register: result
+  no_log: true
+  ignore_errors: true
+
+- name: Error message
+  when: result['failed']
+  block:
+    - name: Error message
+      ansible.builtin.debug:
+        msg: "Vault Login was not successful."
+
+    - name: Stop execution
+      meta: end_play
+
+- name: User message
+  ansible.builtin.debug:
+    msg: "Vault Login was successful."

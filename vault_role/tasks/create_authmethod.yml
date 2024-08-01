@@ -34,7 +34,7 @@
         "type": "{{ auth_method_type }}"
       }
 
-- name: Create Authentication Method 
+- name: Create Authentication Method
   when: body is defined
   ansible.builtin.uri:
     url: "{{ vault_addr }}/v1/sys/auth/{{ auth_method_name }}"

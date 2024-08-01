@@ -27,6 +27,10 @@
     vault_addr: "{{ lookup('env', 'VAULT_ADDR') }}"
     vault_token: "{{ lookup('env', 'VAULT_TOKEN') }}"
 
+- name: General Prechecks - Vault Login
+  ansible.builtin.include_tasks:
+    file: "login.yml"
+
 - name: Execute task
   ansible.builtin.include_tasks:
     file: "{{ user_action }}.yml"

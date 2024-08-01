@@ -18,3 +18,4 @@ valid_user_action:
   - "create_engine"
   - "create_secret"
   - "create_authmethod"
+  - "create_policy"
