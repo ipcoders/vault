@@ -1,36 +1,10 @@
 ---
 - hosts: localhost
   gather_facts: no
-  vars_prompt:
-    - name: "policy_name"
-      prompt: "Please enter a name for the Vault policy"
-      private: no
-      default: "user-policy"
-  pre_tasks:
-    - name: Precheck - Policy file
-      when:
-        - policy_name is defined
-        - policy_name != ""
-      block:
-        - name: Set vars
-          set_fact:
-            policy_fullpath: "files/policies/{{ policy_name }}.hcl"
- 
-        - name: Set vars
-          ansible.builtin.set_fact:
-            policy_exists: "{{ policy_fullpath is file }}"
-
-        - name: Error message
-          when: not policy_exists
-          ansible.builtin.debug:
-            msg: "Policy file {{ policy_fullpath }} does not exist."
-
-        - name: Stop execution
-          when: not policy_exists
-          meta: end_play
-
-        - name: Vault role
-          ansible.builtin.include_role:
-            name: vault_role
-          vars:
-            user_action: "list_authmethods"
+  tasks:
+    - name: Vault role
+      ansible.builtin.include_role:
+        name: vault_role
+      vars:
+        user_action: "create_policy"
+        policy_name: "admin-policy"

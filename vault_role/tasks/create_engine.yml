@@ -5,7 +5,7 @@
     engine_name == ""
   block:
     - name: Error message
-      debug:
+      ansible.builtin.debug:
         msg: "The engine type '{{ engine_type }}' is not valid or engine name was empty."
 
     - name: Stop execution
@@ -21,7 +21,7 @@
       when: engine_name in existing_engines
       block:
         - name: Error message
-          debug:
+          ansible.builtin.debug:
             msg: "Engine '{{ engine_name }}' already exists."
 
         - name: Stop execution
@@ -29,7 +29,7 @@
 
 - name: Create body for kv engine
   when: engine_type == "kv"
-  set_fact:
+  ansible.builtin.set_fact:
     body: 
       type: "kv"
       options: 
@@ -37,19 +37,19 @@
 
 - name: Create body
   when: engine_type == "ssh"
-  set_fact:
+  ansible.builtin.set_fact:
     body:
       type: "ssh"
 
 - name: Create body
   when: engine_type == "pki"
-  set_fact:
+  ansible.builtin.set_fact:
     body:
       type: "pki"
 
 - name: Create Engine
   when: body is defined
-  uri:
+  ansible.builtin.uri:
     url: "{{ vault_addr }}/v1/sys/mounts/{{ engine_name }}"
     method: POST
     headers:

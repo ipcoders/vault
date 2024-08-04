@@ -15,10 +15,10 @@
 
 
 - name: Set var
-  set_fact:
+  ansible.builtin.set_fact:
     current_time: "_{{ result.stdout }}"
 
 - name: Display the current time
-  debug:
+  ansible.builtin.debug:
     msg: "Current time is {{ current_time }}"
 

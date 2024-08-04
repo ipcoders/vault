@@ -1,63 +1,55 @@
 ---
-- name: Check if policy file exists
-  ansible.builtin.stat:
-    path: "{{ policy_name }}.hcl"
-  register: policy_file
-
-- name: Role Prechecks - Required Vars
+- name: Prechecks - Required vars
   when: >
-        policy_name == "" or
-        policy_file.stat.exists
+    policy_name is undefined or
+    policy_name == ""
   block:
     - name: Error message
-      ansible.builtin.debug:
-        msg: 
-          - "Either the policy name '{{ policy_name }}' is incorrect." 
-          - "or the policy file '{{ policy_name }}.hcl' does not exist in the files folder."
+      debug:
+        msg: "The policy name '{{ policy_name }}' is either not defined or empty."
 
     - name: Stop execution
       meta: end_play
 
-- name: Get policy from file
-  ansible.builtin.set_fact:
-    policy_content: "{{ lookup('file', 'files/' + policy_name + '.json') }}"
-- set_fact:
-    policy_content_base64: "{{ policy_content | b64encode }}"
-- debug:
-    msg: 
-      - "{{ policy_content }}"
-      - "{{policy_content_base64 }}"
-- name: Create Vault Admin Policy via API
-  when: policy_content is defined
-  ansible.builtin.uri:
-    url: "{{ vault_addr }}/v1/sys/policy/{{ policy_name }}"
-    method: POST
-    headers:
-      X-Vault-Token: "{{ vault_token }}"
-    body: |
-      {
-       "policy": "path \'auth/*\' { capabilities = [\'create\', \'read\', \'update\', \'delete\', \'list\', \'sudo\']"
-      }
-    body_format: json
-    status_code: [200, 201, 204, 404]
-    return_content: true
-    validate_certs: false
-  register: result
-
-- name: Show result
-  when: write_result['status'] in [200, 201, 204]
-  ansible.builtin.debug:
-    msg: 
-      - "Policy '{{ policy_name }}' was created successfully."
-      - "{{ result }}"  
-
-- name: Write failed
-  when: result['status'] == 404
+- name: Prechecks - Policy file
   block:
+    - name: Set vars
+      ansible.builtin.set_fact:
+        policy_fullpath: "files/policies/{{ policy_name }}.hcl"
+ 
+    - name: Set vars
+      ansible.builtin.set_fact:
+        policy_exists: "{{ policy_fullpath is file }}"
+
     - name: Error message
+      when: not policy_exists
+      block:
+        - name: Error message  
+          ansible.builtin.debug:
+            msg: "Policy file {{ policy_fullpath }} does not exist."
+
+        - name: Stop execution
+          meta: end_play
+
+- name: Prechecks - Policy format
+  block:
+    - name: Vault role
+      ansible.builtin.command:
+        cmd: "vault policy fmt {{ policy_fullpath }}"
+      register: cmd_result
+
+    - name: Show result
       ansible.builtin.debug:
-        msg: "Policy '{{ policy_name }}' was not created."
+        msg: "{{ cmd_result }}"
 
-    - name: Stop execution
-      meta: end_play
+- name: Prechecks - Policy file
+  when: 1 == 3
+  block:
+    - name: Vault role
+      ansible.builtin.command:
+        cmd: "vault policy write {{ policy_name }} {{ policy_fullpath }}"
+      register: cmd_result
 
+    - name: Show result
+      ansible.builtin.debug:
+        msg: "{{ cmd_result }}"

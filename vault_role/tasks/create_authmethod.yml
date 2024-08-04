@@ -5,8 +5,8 @@
     auth_method_name == ""
   block:
     - name: Error message
-      debug:
-        msg: "The authentication method '{{ auth_method_type }}' is not valid or name was empty."
+      ansible.builtin.debug:
+        msg: "Input was empty or type is not valid."
 
     - name: Stop execution
       meta: end_play
