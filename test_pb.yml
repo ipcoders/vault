@@ -1,10 +1,17 @@
 ---
 - hosts: localhost
   gather_facts: no
+  vars_prompt:
+    - name: "engine_name"
+      prompt: "Please enter the engine name"
+      private: no
+
+    - name: "pki_role_name"
+      prompt: "Please enter the PKI Role name"
+      private: no
   tasks:
     - name: Vault role
       ansible.builtin.include_role:
         name: vault_role
       vars:
-        user_action: "create_policy"
-        policy_name: "admin-policy"
+        user_action: "create_pki_role"

@@ -1,0 +1,72 @@
+---
+- name: Set vars
+  ansible.builtin.set_fact:
+    engine_exists: false
+    existing_certificates: []
+    is_engine_empty: true
+
+- name: Role Prechecks - Required Vars
+  when: engine_name is not defined  
+  block:
+    - name: Error message
+      ansible.builtin.debug:
+        msg: "Required variable is missing, make sure engine_name is defined."
+
+    - name: Stop execution
+      meta: end_play
+
+- name: Prechecks - Check existing engines
+  block:
+    - name: Vault task
+      ansible.builtin.include_tasks:
+        file: list_engines.yml
+
+    - name: Validate engines
+      when: engine_name not in existing_engines
+      block:
+        - name: Error message
+          ansible.builtin.debug:
+            msg: "Engine '{{ engine_name }}' does not exist."
+
+        - name: Stop execution
+          meta: end_play
+
+    - name: Set vars
+      when: engine_name in existing_engines
+      ansible.builtin.set_fact:
+        engine_exists: true
+
+- name: Get certificates
+  when: engine_exists
+  block:
+    - name: Query 
+      ansible.builtin.uri:
+        url: "{{ vault_addr }}/v1/{{ engine_name }}/metadata/?list=true"
+        method: GET
+        headers:
+          X-Vault-Token: "{{ vault_token }}"
+        status_code: [200, 201, 204, 404]
+        return_content: true
+        validate_certs: false
+      register: result
+
+    - name: Show result
+      when: result['status'] == 404 and engine_exists
+      block:
+        - name: User message 
+          ansible.builtin.debug:
+            msg: "Engine exists but does not have secrets."
+
+    - name: Existing secrets
+      when: result['status'] in [200, 201, 204]
+      block:
+        - name: Set var
+          ansible.builtin.set_fact:
+            existing_secrets: "{{ result['json']['data']['keys'] }}"
+            is_engine_empty: false
+
+        - name: Show result
+          ansible.builtin.debug:
+            msg: "{{ existing_secrets }}"
+   
+

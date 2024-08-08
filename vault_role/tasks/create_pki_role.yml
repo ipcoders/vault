@@ -1,0 +1,74 @@
+---
+- name: Prechecks - Required vars
+  when: >
+    engine_name is undefined or engine_name == "" or
+    pki_role_name is undefined or pki_role_name == ""
+  block:
+    - name: Error message
+      debug:
+        msg: "The PKI role name '{{ pki_role_name }}' is either not defined or empty."
+
+    - name: Stop execution
+      meta: end_play
+
+- name: Prechecks - PKI Role file
+  block:
+    - name: Set vars
+      ansible.builtin.set_fact:
+        pki_role_fullpath: "files/pki/{{ pki_role_name }}.yml"
+
+    - name: Set vars
+      ansible.builtin.set_fact:
+        pki_role_exists: "{{ pki_role_fullpath is file }}"
+
+    - name: Error message
+      when: not pki_role_exists
+      block:
+        - name: Error message
+          ansible.builtin.debug:
+            msg: "PKI Role file {{ pki_role_fullpath }} does not exist."
+
+        - name: Stop execution
+          meta: end_play
+
+- name: Create PKI Role
+  when: pki_role_exists
+  block:
+    - name: Set var
+      ansible.builtin.set_fact:
+        pki_role_path: "{{ engine_name }}/roles/{{ pki_role_name }}"
+
+    - name: Load PKI role parameters from YAML file
+      ansible.builtin.include_vars:
+        file: "{{ pki_role_fullpath }}"
+        name: pki_role_data
+
+    - name: Write Role
+      ansible.builtin.uri:
+        url: "{{ vault_addr }}/v1/{{ pki_role_path }}"
+        method: POST
+        headers:
+          X-Vault-Token: "{{ vault_token }}"
+          X-Vault-Request: true
+        body: "{{ pki_role_data | to_json }}"
+        status_code: [200, 201, 204, 404]
+        body_format: json
+        return_content: true
+        validate_certs: false
+      register: result
+
+    - name: Show result
+      when: result['status'] in [200, 201, 204]
+      ansible.builtin.debug:
+        msg: "Role '{{ pki_role_name }}' was created successfully."
+
+    - name: Write failed
+      when: result['status'] == 404
+      block:
+        - name: Error message
+          ansible.builtin.debug:
+            msg: "PKI Role '{{ pki_role_name }}' was not created."
+
+        - name: Stop execution
+          meta: end_play
+
