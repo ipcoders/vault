@@ -9,9 +9,40 @@
     - name: "pki_role_name"
       prompt: "Please enter the PKI Role name"
       private: no
+
+  pre_tasks:
+    - name: Role Prechecks - Required Vars
+      when: >
+        engine_name is not defined or engine_name | trim == "" or
+        pki_role_name is not defined or pki_role_name | trim == ""
+      block:
+        - name: Error message
+          ansible.builtin.debug:
+            msg: "Required variables 'engine_name' and 'pki_role_name' are missing or empty"
+
+        - name: Stop execution
+          meta: end_play
+
+    - name: Vault role
+      ansible.builtin.include_role:
+        name: vault_role
+      vars:
+        user_action: "list_engines"
+
+    - name: Validate engine exists
+      when: engine_name not in existing_engines
+      block:
+        - name: Error message
+          ansible.builtin.debug:
+            msg: "Engine '{{ engine_name }}' does not exist."
+
+        - name: Stop execution
+          meta: end_play
+
   tasks:
     - name: Vault role
       ansible.builtin.include_role:
         name: vault_role
       vars:
         user_action: "create_pki_role"
+

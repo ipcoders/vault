@@ -1,0 +1,15 @@
+---
+allowed_domains:
+  - "latte.com"
+  - "www.coffee.com"
+  - "www.latte.com"
+allow_subdomains: true
+max_ttl: "30h"  
+key_usage:
+  - "DigitalSignature"
+  - "KeyEncipherment"
+extended_key_usage:
+  - "serverAuth"
+allow_any_name: false
+enforce_hostnames: true
+

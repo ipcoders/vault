@@ -15,24 +15,40 @@
   block:
     - name: Set vars
       ansible.builtin.set_fact:
-        pki_role_fullpath: "files/pki/{{ pki_role_name }}.yml"
+        pki_role_file: "files/pki/{{ pki_role_name }}.yml"
 
     - name: Set vars
       ansible.builtin.set_fact:
-        pki_role_exists: "{{ pki_role_fullpath is file }}"
+        pki_role_file_exists: "{{ pki_role_file is file }}"
 
     - name: Error message
-      when: not pki_role_exists
+      when: not pki_role_file_exists
       block:
         - name: Error message
           ansible.builtin.debug:
-            msg: "PKI Role file {{ pki_role_fullpath }} does not exist."
+            msg: "PKI Role file {{ pki_role_file }} does not exist."
+
+        - name: Stop execution
+          meta: end_play
+
+- name: Prechecks - PKI Existing Roles
+  block:
+    - name: Vault task
+      ansible.builtin.include_tasks:
+        file: list_pki_roles.yml
+
+    - name: Validate existing roles
+      when: pki_role_name in existing_pki_roles
+      block:
+        - name: Error message
+          ansible.builtin.debug:
+            msg: "Role '{{ pki_role_name }}' already exists."
 
         - name: Stop execution
           meta: end_play
 
 - name: Create PKI Role
-  when: pki_role_exists
+  when: pki_role_file_exists
   block:
     - name: Set var
       ansible.builtin.set_fact:
@@ -40,7 +56,7 @@
 
     - name: Load PKI role parameters from YAML file
       ansible.builtin.include_vars:
-        file: "{{ pki_role_fullpath }}"
+        file: "{{ pki_role_file }}"
         name: pki_role_data
 
     - name: Write Role

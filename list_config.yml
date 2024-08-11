@@ -29,5 +29,13 @@
       ansible.builtin.include_role:
         name: vault_role
       vars:
+        user_action: "list_pki_roles"
+        engine_name: "pki-a"
+
+    - name: Vault role
+      when: 1 == 2
+      ansible.builtin.include_role:
+        name: vault_role
+      vars:
         user_action: "list_certificates"
         engine_name: "pki-a"
