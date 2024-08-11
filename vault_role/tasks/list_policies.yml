@@ -1,0 +1,40 @@
+---
+- name: Set vars
+  ansible.builtin.set_fact:
+    existing_policies: []
+
+- name: Get Policies
+  block:
+    - name: Query 
+      ansible.builtin.uri:
+        url: "{{ vault_addr }}/v1/sys/policies/acl"
+        method: LIST
+        headers:
+          X-Vault-Token: "{{ vault_token }}"
+        status_code: [200, 201, 204, 404]
+        return_content: true
+        validate_certs: false
+      register: result
+
+    - name: Error message
+      when: result['status'] not in [200, 201, 204]
+      block:
+        - name: User message 
+          ansible.builtin.debug:
+            msg: "Query failed."
+
+        - name: Stop execution
+          meta: end_play
+
+    - name: Existing policies
+      when: result['status'] in [200, 201, 204]
+      block:
+        - name: Set var
+          ansible.builtin.set_fact:
+            existing_policies: "{{ result['json']['data']['keys'] }}"
+
+        - name: Show result
+          ansible.builtin.debug:
+            msg: "{{ existing_policies }}"
+   
+

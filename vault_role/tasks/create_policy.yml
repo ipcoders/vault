@@ -1,8 +1,7 @@
 ---
 - name: Prechecks - Required vars
   when: >
-    policy_name is undefined or
-    policy_name == ""
+    policy_name is undefined or policy_name | trim == ""
   block:
     - name: Error message
       debug:
@@ -15,18 +14,18 @@
   block:
     - name: Set vars
       ansible.builtin.set_fact:
-        policy_fullpath: "files/policies/{{ policy_name }}.hcl"
+        policy_file: "files/policies/{{ policy_name }}.hcl"
  
     - name: Set vars
       ansible.builtin.set_fact:
-        policy_exists: "{{ policy_fullpath is file }}"
+        policy_exists: "{{ policy_file is file }}"
 
     - name: Error message
       when: not policy_exists
       block:
         - name: Error message  
           ansible.builtin.debug:
-            msg: "Policy file {{ policy_fullpath }} does not exist."
+            msg: "Policy file {{ policy_file }} does not exist."
 
         - name: Stop execution
           meta: end_play
@@ -35,21 +34,61 @@
   block:
     - name: Vault role
       ansible.builtin.command:
-        cmd: "vault policy fmt {{ policy_fullpath }}"
-      register: cmd_result
+        cmd: "vault policy fmt {{ policy_file }}"
+      register: fmt_cmd_result
 
-    - name: Show result
+    - name: Show cmd result
+      when: fmt_cmd_result['failed']
+      block:
+        - name: Error message
+          ansible.builtin.debug:
+            msg: 
+              - "vault policy fmt failed"
+              - "{{ fmt_cmd_result }}"
+
+        - name: Stop execution
+          meta: end_play
+
+    - name: User message
       ansible.builtin.debug:
-        msg: "{{ cmd_result }}"
+        msg: "{{ fmt_cmd_result['stdout'] }}"
 
-- name: Prechecks - Policy file
-  when: 1 == 3
+- name: Prechecks - Check existing policies
+  block:
+    - name: Vault task
+      ansible.builtin.include_tasks:
+        file: list_policies.yml
+
+    - name: Validate policies
+      when: policy_name in existing_policies
+      block:
+        - name: Error message
+          ansible.builtin.debug:
+            msg: "Policy '{{ policy_name }}' already exists."
+
+        - name: Stop execution
+          meta: end_play
+
+- name: Create Policy 
   block:
     - name: Vault role
       ansible.builtin.command:
-        cmd: "vault policy write {{ policy_name }} {{ policy_fullpath }}"
-      register: cmd_result
+        cmd: "vault policy write {{ policy_name }} {{ policy_file }}"
+      register: write_cmd_result
 
-    - name: Show result
+    - name: Show cmd result
+      when: write_cmd_result['failed']
+      block:
+        - name: Error message
+          ansible.builtin.debug:
+            msg: 
+              - "vault policy write failed"
+              - "{{ write_cmd_result }}"
+
+        - name: Stop execution
+          meta: end_play
+
+    - name: Show cmd result
       ansible.builtin.debug:
-        msg: "{{ cmd_result }}"
+        msg: "{{ write_cmd_result['stdout'] }}"
+

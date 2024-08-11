@@ -18,6 +18,12 @@
         engine_name: "coffee"
 
     - name: Vault role
+      ansible.builtin.include_role:
+        name: vault_role
+      vars:
+        user_action: "list_policies"
+
+    - name: Vault role
       when: 1 == 3
       ansible.builtin.include_role:
         name: vault_role
@@ -25,7 +31,7 @@
         user_action: "list_authmethods"
 
     - name: Vault role
-      when: 1 == 1
+      when: 1 == 2
       ansible.builtin.include_role:
         name: vault_role
       vars:

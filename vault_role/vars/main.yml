@@ -13,6 +13,7 @@ valid_user_action:
   - "list_authmethods"
   - "list_engines"
   - "list_secrets"
+  - "list_policies"
   - "list_pki_roles"
   - "list_certificates"
   - "backup_secret"

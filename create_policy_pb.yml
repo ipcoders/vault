@@ -1,0 +1,16 @@
+---
+- name: Create Policy
+  hosts: localhost
+  gather_facts: no
+  vars_prompt:
+    - name: "policy_name"
+      prompt: "Please enter the policy name"
+      private: no
+
+  tasks:
+    - name: Vault role
+      ansible.builtin.include_role:
+        name: vault_role
+      vars:
+        user_action: "create_policy"
+
