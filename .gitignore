@@ -1,1 +1,5 @@
+# Sensitive data
 env.sh
+
+# Folders
+backup/
